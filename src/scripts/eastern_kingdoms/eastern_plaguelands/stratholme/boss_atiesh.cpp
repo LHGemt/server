@@ -45,11 +45,12 @@ struct boss_atiesh : public ScriptedAI
 
     EventMap events;
     bool hasBeenDisarmed;
-
+    bool hasDoneSpawnCast;
     void Reset() override
     {
         events.Reset();
         hasBeenDisarmed = false;
+        hasDoneSpawnCast = false;
         m_creature->SetVirtualItem(VIRTUAL_ITEM_SLOT_0, 22738);
     }
 
@@ -72,6 +73,11 @@ struct boss_atiesh : public ScriptedAI
 
     void UpdateAI(const uint32 diff) override
     {
+        if (!hasDoneSpawnCast)
+        {
+            m_creature->CastSpell(m_creature, 24240, true);
+            hasDoneSpawnCast = true;
+        }
 
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
