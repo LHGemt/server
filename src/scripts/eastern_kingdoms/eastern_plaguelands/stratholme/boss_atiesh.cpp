@@ -72,13 +72,12 @@ struct boss_atiesh : public ScriptedAI
 
     void UpdateAI(const uint32 diff) override
     {
-        if (!m_creature->HasAura(SPELL_UNHOLY_AURA))
-            DoCastSpellIfCan(m_creature, SPELL_UNHOLY_AURA);
 
         if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
             return;
 
-
+        if (!m_creature->HasAura(SPELL_UNHOLY_AURA))
+            DoCastSpellIfCan(m_creature, SPELL_UNHOLY_AURA);
         if (!m_creature->HasAura(SPELL_THRASH))
             DoCastSpellIfCan(m_creature, SPELL_THRASH);
 
