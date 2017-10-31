@@ -59,11 +59,6 @@ struct boss_atiesh : public ScriptedAI
         events.ScheduleEvent(EVENT_SHADOW_BOLT, Seconds(1));
     }
 
-    void JustDied(Unit* pKiller) override
-    {
-
-    }
-
     void SpellHit(Unit*, const SpellEntry* spell) override
     {
         // look for disarm, drop a weapon
