@@ -3,9 +3,9 @@ delimiter ??
 CREATE PROCEDURE `add_migration`()
 BEGIN
 DECLARE v INT DEFAULT 1;
-SET v = (SELECT COUNT(*) FROM `migrations` WHERE `id`='20171012210802');
+SET v = (SELECT COUNT(*) FROM `migrations` WHERE `id`='20171101154401');
 IF v=0 THEN
-INSERT INTO `migrations` VALUES ('20171012210802');
+INSERT INTO `migrations` VALUES ('20171101154401');
 -- Add your query below.
 
 -- Dalaran summoner: remove summmon spells from player pet-bar when MCing.
