@@ -63,6 +63,7 @@
 #include "Anticheat.h"
 #include "CreatureLinkingMgr.h"
 #include "InstanceStatistics.h"
+#include "LootLogMgr.h"
 
 #include <math.h>
 #include <stdarg.h>
@@ -1086,7 +1087,11 @@ void Unit::Kill(Unit* pVictim, SpellEntry const *spellProto, bool durabilityLoss
                     loot->FillLoot(lootid, LootTemplates_Creature, looter, false, false, creature);
                 }
             }
-
+            // log loot here....
+            if (group_tap)
+            {
+                sLootLogMgr.LogGroupKill(creature, group_tap);
+            }
             loot->generateMoneyLoot(creature->GetCreatureInfo()->mingold, creature->GetCreatureInfo()->maxgold);
         }
 

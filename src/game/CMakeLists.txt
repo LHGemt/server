@@ -30,6 +30,7 @@ set (game_SRCS
 	HonorMgr.cpp
 	InstanceStatistics.cpp
 	ItemEnchantmentMgr.cpp
+	LootLogMgr.cpp
 	LootMgr.cpp
 	ObjectAccessor.cpp
 	ObjectGridLoader.cpp
@@ -242,6 +243,7 @@ set (game_SRCS
 	InstanceStatistics.h
 	ItemEnchantmentMgr.h
 	Language.h
+	LootLogMgr.h
 	LootMgr.h
 	ObjectAccessor.h
 	ObjectGridLoader.h

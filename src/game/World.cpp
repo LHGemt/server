@@ -83,6 +83,7 @@
 #include "Anticheat/Anticheat.h"
 #include "AuraRemovalMgr.h"
 #include "InstanceStatistics.h"
+#include "LootLogMgr.h"
 
 #include <chrono>
 
@@ -1569,6 +1570,9 @@ void World::SetInitialWorldSettings()
 
     sLog.outString("Loading aura removal on map change definitions");
     sAuraRemovalMgr.LoadFromDB();
+
+    sLog.outString("Loading Loot Log variables");
+    sLootLogMgr.Load();
 
     ///- Initialize game time and timers
     sLog.outString("DEBUG:: Initialize game time and timers");
