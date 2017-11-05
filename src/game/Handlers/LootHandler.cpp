@@ -35,6 +35,7 @@
 #include "World.h"
 #include "Util.h"
 #include "Anticheat.h"
+#include "LootLogMgr.h"
 
 void WorldSession::HandleAutostoreLootItemOpcode(WorldPacket & recv_data)
 {
@@ -46,7 +47,7 @@ void WorldSession::HandleAutostoreLootItemOpcode(WorldPacket & recv_data)
     Item* pItem = NULL;
 
     recv_data >> lootSlot;
-
+    Creature* pCreature = nullptr;
     switch (lguid.GetHigh())
     {
         case HIGHGUID_GAMEOBJECT:
@@ -89,8 +90,8 @@ void WorldSession::HandleAutostoreLootItemOpcode(WorldPacket & recv_data)
         }
         case HIGHGUID_UNIT:
         {
-            Creature* pCreature = GetPlayer()->GetMap()->GetCreature(lguid);
-
+            pCreature = GetPlayer()->GetMap()->GetCreature(lguid);
+            
             bool ok_loot = pCreature && pCreature->isAlive() == (player->getClass() == CLASS_ROGUE && pCreature->lootForPickPocketed);
 
             if (!ok_loot || !pCreature->IsWithinDistInMap(_player, INTERACTION_DISTANCE))
@@ -182,6 +183,15 @@ void WorldSession::HandleAutostoreLootItemOpcode(WorldPacket & recv_data)
         sLog.out(LOG_LOOTS, "%s loots %ux%u [loot from %s]", _player->GetShortDescription().c_str(), item->count, item->itemid, lguid.GetString().c_str());
         player->SendNewItem(newitem, uint32(item->count), false, false, true);
         player->OnReceivedItem(newitem);
+
+        // If this does not become too much of a performance issue it should remove rollbacks
+        // on already looted boss-loot on server crashes.
+        if (pCreature && ((pCreature->GetCreatureInfo()->type_flags & CREATURE_TYPEFLAGS_BOSS) || pCreature->IsWorldBoss())) {
+            player->SaveInventoryAndGoldToDB();
+        }
+
+        sLootLogMgr.LogLootReceived(pCreature, player, newitem);
+
     }
     else
         player->SendEquipError(msg, NULL, NULL, item->itemid);
