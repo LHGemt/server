@@ -1986,7 +1986,8 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         void UnitDamaged(ObjectGuid from, uint32 damage) { _damageTakenHistory[from] += damage; _lastDamageTaken = 0; }
         void SetMeleeZLimit(float newZLimit) { m_meleeZLimit = newZLimit; }
         float GetMeleeZLimit() const { return m_meleeZLimit; }
-
+        void SetLastDeathTime(time_t t) { lastDeathTime = t; }
+        time_t GetLastDeathTime() const { return lastDeathTime; }
     protected:
         typedef std::map<ObjectGuid /*attackerGuid*/, uint32 /*damage*/ > DamageTakenHistoryMap;
         DamageTakenHistoryMap   _damageTakenHistory;
@@ -2032,6 +2033,8 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         ObjectGuid m_TotemSlot[MAX_TOTEM_SLOT];
 
         float m_meleeZLimit;
+
+        time_t lastDeathTime;
 
         // Error traps for some wrong args using
         // this will catch and prevent build for any cases when all optional args skipped and instead triggered used non boolean type
