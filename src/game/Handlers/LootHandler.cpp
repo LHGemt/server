@@ -186,12 +186,19 @@ void WorldSession::HandleAutostoreLootItemOpcode(WorldPacket & recv_data)
 
         // If this does not become too much of a performance issue it should remove rollbacks
         // on already looted boss-loot on server crashes.
-        if (pCreature && ((pCreature->GetCreatureInfo()->type_flags & CREATURE_TYPEFLAGS_BOSS) || pCreature->IsWorldBoss())) {
+        // Instantly save any epic or higher quality items.
+        // Also save rare or higher quality items dropping from creatures with TYPEFLAG_BOSS
+        uint32 quality = newitem->GetProto()->Quality;
+        if (quality >= ITEM_QUALITY_EPIC) {
             player->SaveInventoryAndGoldToDB();
+        }
+        else if (quality >= ITEM_QUALITY_RARE)
+        {
+            if(pCreature && ((pCreature->GetCreatureInfo()->type_flags & CREATURE_TYPEFLAGS_BOSS) || pCreature->IsWorldBoss()) && quality >= ITEM_QUALITY_RARE)
+                player->SaveInventoryAndGoldToDB();
         }
 
         sLootLogMgr.LogLootReceived(pCreature, player, newitem);
-
     }
     else
         player->SendEquipError(msg, NULL, NULL, item->itemid);
