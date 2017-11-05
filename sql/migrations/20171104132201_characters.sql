@@ -16,7 +16,7 @@ INSERT INTO `migrations` VALUES ('20171104132201');
 DROP TABLE IF EXISTS `loot_creature_death`;
 CREATE TABLE `loot_log` (
   `key` bigint(20) NOT NULL AUTO_INCREMENT,
-  `creatureEntry` int(10) unsigned NOT NULL,
+  `creatureGuid` bigint unsigned NOT NULL,
   `timestamp` bigint(20) NOT NULL,
   PRIMARY KEY (`key`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;
@@ -43,8 +43,9 @@ DROP PROCEDURE IF EXISTS add_migration;
 DROP TABLE IF EXISTS `loot_creature_death`;
 CREATE TABLE `loot_creature_death` (
   `key` bigint(20) unsigned NOT NULL,
-  `creatureEntry` int(10) unsigned NOT NULL,
+  `creatureGuid` bigint unsigned NOT NULL,
   `timestamp` bigint(20) NOT NULL,
+  `instanceId` int(10) unsigned NOT NULL,
   PRIMARY KEY (`key`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;
 
