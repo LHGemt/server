@@ -43,8 +43,8 @@ INSTANTIATE_SINGLETON_1(LootLogManager);
     loot_items:          maps each item dropped by the creature to the loot_creature_death table through the same key
     loot_candidates:     maps each eligible player to the same creature through the same key.
 
-
-    loot_creature_death   key         creatureEntry   timestamp    instanceID
+                                      
+    loot_creature_death   key         creatureGuid    timestamp    instanceID
     loot_items            key         itemEntry       looterGuid       
     loot_candidates       key         playerGuid
 
@@ -75,16 +75,19 @@ void LootLogManager::LogGroupKill(Creature * pCreature, Group * pGroup)
 	if (!(pCreature->GetCreatureInfo()->type_flags & CREATURE_TYPEFLAGS_BOSS) && !pCreature->IsWorldBoss())
 		return;
 	
+    uint32 instanceId = pCreature->GetMap()->GetInstanceId();
 
 	// Finding the players in range for the loot
 	std::map<Player*, std::vector<LootItem>> lootLog;
 
     //std::lock_guard<std::mutex> guard(_mutex);
-    uint64 currentKey = highestKey++;
+    uint64 currentKey = ++highestKey;
+
+    pCreature->SetLastDeathTime(time(NULL));
 
     CharacterDatabase.PExecute(
-        "INSERT INTO `loot_creature_death` (`key`, `creatureEntry`, `timestamp`) VALUES (%u, %u, %lld)", 
-        currentKey, pCreature->GetEntry(), (long long)time(NULL));
+        "INSERT INTO `loot_creature_death` (`key`, `creatureGuid`, `timestamp`, `instanceId`) VALUES (%u, %llu, %lld, %u)", 
+        currentKey, pCreature->GetGUID(), pCreature->GetLastDeathTime(), instanceId);
 
     for (auto it = loot->items.begin(); it != loot->items.end(); it++)
     {
@@ -116,7 +119,13 @@ void LootLogManager::LogLootReceived(Creature * pCreature, Player * pPlayer, Ite
     // Only loot-log boss loot
     if (!(pCreature->GetCreatureInfo()->type_flags & CREATURE_TYPEFLAGS_BOSS) && !pCreature->IsWorldBoss())
         return;
-
+    
+    uint32 instanceId = pCreature->GetMap()->GetInstanceId();
+        
+    CharacterDatabase.PExecute(
+        "UPDATE `loot_items` set `looterGuid`=%u WHERE `itemEntry` = %u AND `key` = "
+        "(select `key` from loot_creature_death where creatureGuid=%llu AND instanceID=%u AND `timestamp`=%lld)",
+        pPlayer->GetGUIDLow(), item->GetEntry(), pCreature->GetGUID(), instanceId, pCreature->GetLastDeathTime());
 }
 
 void LootLogManager::Load()
