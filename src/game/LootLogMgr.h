@@ -35,7 +35,10 @@ public:                                                 // Constructors
 
 public:                                                 // Accessors
 	void LogGroupKill(Creature* pCreature, Group* pGroup);
+    void LogLootReceived(Creature* pCreature, Player* pPlayer, Item* item);
+
     void Load();
+
 private:
 	std::mutex _mutex;
     std::atomic<uint64> highestKey;

@@ -1122,6 +1122,7 @@ ChatCommand * ChatHandler::getCommandTable()
         { MSTR, "spamer",         SEC_GAMEMASTER,     true, nullptr,                                           "", spamerCommandTable },
         { MSTR, "antispam",       SEC_GAMEMASTER,     true, nullptr,                                           "", AntiSpamCommandTable },
         { MSTR, "gold",           SEC_GAMEMASTER,     true, nullptr,                                           "", goldCommandTable },
+        { MSTR, "lootlog",        SEC_GAMEMASTER,     true, &ChatHandler::HandleCanReceiveItem,                "", nullptr },
         { MSTR, nullptr,       0,                  false, nullptr,                                           "", nullptr }
     };
 
