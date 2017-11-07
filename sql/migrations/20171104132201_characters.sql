@@ -14,36 +14,10 @@ INSERT INTO `migrations` VALUES ('20171104132201');
 --
 
 DROP TABLE IF EXISTS `loot_creature_death`;
-CREATE TABLE `loot_log` (
-  `key` bigint(20) NOT NULL AUTO_INCREMENT,
-  `creatureGuid` bigint unsigned NOT NULL,
-  `timestamp` bigint(20) NOT NULL,
-  PRIMARY KEY (`key`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;
-
---
--- Table structure for table `instance_creature_kills`
---
-DROP TABLE IF EXISTS `loot_log_players`;
-CREATE TABLE `loot_log_players` (
-  `key` bigint(20) unsigned NOT NULL ,
-  `playerGuid` int(11) unsigned NOT NULL,
-  PRIMARY KEY (`key`, `playerGuid`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;
-
-
--- End of migration.
-END IF;
-END??
-delimiter ; 
-CALL add_migration();
-DROP PROCEDURE IF EXISTS add_migration;
-
-
-DROP TABLE IF EXISTS `loot_creature_death`;
 CREATE TABLE `loot_creature_death` (
   `key` bigint(20) unsigned NOT NULL,
   `creatureGuid` bigint unsigned NOT NULL,
+  `creatureEntry` int(10) unsigned NOT NULL,
   `timestamp` bigint(20) NOT NULL,
   `instanceId` int(10) unsigned NOT NULL,
   PRIMARY KEY (`key`)
@@ -64,3 +38,12 @@ CREATE TABLE `loot_candidates` (
   `playerGuid` int(11) unsigned NOT NULL,
   PRIMARY KEY (`key`, `playerGuid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;
+
+-- End of migration.
+END IF;
+END??
+delimiter ; 
+CALL add_migration();
+DROP PROCEDURE IF EXISTS add_migration;
+
+
