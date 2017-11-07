@@ -26,25 +26,20 @@
 #include "LootLogMgr.h"
 #include "Chat.h"
 #include "Language.h"
+#include "ObjectMgr.h"
 
 #include <ctime>
 
 INSTANTIATE_SINGLETON_1(LootLogManager);
 
 /*
-	When an item drops from a creature, each item gets an entry in the LootLog table.
-	The entry will contain the entry of the item, the creature which dropped the item, a foreign key
-	pointing to a set of playerGuids in the LootCandidates table and nullable playerGuid, lootedBy.
-	LootedBy will be null when the row is first inserted into the table. As soon as the item is given 
-	to a player lootedBy will be updated to that playerGuid.
-
     When a boss is killed we get hook into the Unit::Kill function and store the following information:
     loot_creature_death: creature-entry, a timestamp and a key 
     loot_items:          maps each item dropped by the creature to the loot_creature_death table through the same key
     loot_candidates:     maps each eligible player to the same creature through the same key.
 
                                       
-    loot_creature_death   key         creatureGuid    timestamp    instanceID
+    loot_creature_death   key         creatureGuid    creatureEntry    timestamp    instanceID
     loot_items            key         itemEntry       looterGuid       
     loot_candidates       key         playerGuid
 
@@ -86,8 +81,8 @@ void LootLogManager::LogGroupKill(Creature * pCreature, Group * pGroup)
     pCreature->SetLastDeathTime(time(NULL));
 
     CharacterDatabase.PExecute(
-        "INSERT INTO `loot_creature_death` (`key`, `creatureGuid`, `timestamp`, `instanceId`) VALUES (%u, %llu, %lld, %u)", 
-        currentKey, pCreature->GetGUID(), pCreature->GetLastDeathTime(), instanceId);
+        "INSERT INTO `loot_creature_death` (`key`, `creatureGuid`, `creatureEntry`, `timestamp`, `instanceId`) VALUES (%u, %llu, %u, %lld, %u)", 
+        currentKey, pCreature->GetGUID(), pCreature->GetEntry(), pCreature->GetLastDeathTime(), instanceId);
 
     for (auto it = loot->items.begin(); it != loot->items.end(); it++)
     {
@@ -144,9 +139,8 @@ void LootLogManager::Load()
 }
 
 /*
-.lootlogg <name> ITEMID
-Returns if player has been awarded that item ID - Could combine with .hasitem ?
-Output: <Name> was awarded ID for raid ID # - Has/hasnot got item.
+.lootlogg <name> <instanceId> <itemid>
+Returns if player has been awarded that item ID
 */
 bool ChatHandler::HandleCanReceiveItem(char* args)
 {
@@ -164,6 +158,14 @@ bool ChatHandler::HandleCanReceiveItem(char* args)
         return false;
     }
     
+    uint32 instanceId = 0;
+    if (!ExtractUInt32(&args, instanceId))
+    {
+        PSendSysMessage("Unable to parse instance ID");
+        SetSentErrorMessage(true);
+        return false;
+    }
+
     uint32 itemId = 0;
     if (!ExtractUInt32(&args, itemId))
     {
@@ -198,20 +200,25 @@ bool ChatHandler::HandleCanReceiveItem(char* args)
             itemCount = fields[0].GetUInt32();
         }
     }
+    std::string itemLink = GetItemLink(pItem).c_str();
 
-    PSendSysMessage("%s's amount of %s (id %u) is: %u", player_name.c_str(), GetItemLink(pItem).c_str(), itemId, itemCount);
+    PSendSysMessage("Loot Log:");
+    PSendSysMessage("Player: %s", player_name.c_str());
+    PSendSysMessage("Item: %s", itemLink.c_str());
+    PSendSysMessage("Inventory count: %u", itemCount);
+    PSendSysMessage("Instance ID: %u", instanceId);
 
     std::unique_ptr<QueryResult> result(CharacterDatabase.PQuery(
-        "SELECT DISTINCT loot_candidates.key, loot_items.itemEntry, loot_items.looterGuid, loot_creature_death.timestamp, loot_creature_death.creatureEntry "
+        "SELECT DISTINCT loot_candidates.key, loot_items.itemEntry, loot_items.looterGuid, loot_creature_death.timestamp, loot_creature_death.creatureEntry, loot_creature_death.creatureGuid "
         "FROM loot_candidates "
         "JOIN loot_items ON loot_candidates.key = loot_items.key "
         "JOIN loot_creature_death ON loot_candidates.key = loot_creature_death.key "
-        "WHERE loot_candidates.playerGuid = %u AND loot_items.itemEntry = %u",
-        target_guid.GetCounter(), itemId));
+        "WHERE loot_candidates.playerGuid = %u AND loot_items.itemEntry = %u AND loot_creature_death.instanceId = %u",
+        target_guid.GetCounter(), itemId, instanceId));
     
     if (!result)
     {
-        SendSysMessage("Player had no recorded loot-log entries");
+        PSendSysMessage(">No recorded loot-log entries");
         SetSentErrorMessage(true);
         return false;
     }
@@ -229,11 +236,25 @@ bool ChatHandler::HandleCanReceiveItem(char* args)
             uint32 looterGuid    = fields[2].GetUInt32();
             time_t timestamp     = (time_t)fields[3].GetUInt64();
             uint32 creatureEntry = fields[4].GetUInt32();
-            
-            std::string ts = TimeToTimestampStr(timestamp);
+            uint32 creatureE2 = ObjectGuid(fields[5].GetUInt64()).GetCounter();
+            std::string creature_name;
+            if (CreatureInfo const* pCI = sObjectMgr.GetCreatureTemplate(creatureEntry))
+                creature_name = std::string(pCI->Name);
+            else
+                creature_name = std::to_string(creatureEntry);
 
-            PSendSysMessage("Player %s loot-log entries:", player_name.c_str());
-            PSendSysMessage("Item: %u, Creature: %u, Kill-Date: %s", itemEntry, creatureEntry, ts.c_str());
+            std::string ts = TimeToTimestampStr(timestamp);
+            std::string looterName;
+            bool looterExist = false;
+            if (Player* pPlayer = sObjectMgr.GetPlayer(ObjectGuid(HIGHGUID_PLAYER, looterGuid))) {
+                looterName = std::string(pPlayer->GetName());
+                looterExist = true;
+            }
+
+            if (looterExist)
+                PSendSysMessage("> %s: Dropped by %s, looted by player: %s.", ts.c_str(), creature_name.c_str(), looterName.c_str());
+            else
+                PSendSysMessage("> %s: Dropped by %s, can be looted by %s.", ts.c_str(), creature_name.c_str(), player_name.c_str());
 
         } while (result->NextRow());
     }
