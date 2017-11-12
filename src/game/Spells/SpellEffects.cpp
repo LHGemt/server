@@ -6116,13 +6116,35 @@ void Spell::EffectBind(SpellEffectIndex eff_idx)
 {
     if (!unitTarget || unitTarget->GetTypeId() != TYPEID_PLAYER)
         return;
-
+    if (!m_caster && !m_caster->ToCreature())
+        return;
     Player* player = (Player*)unitTarget;
 
+    bool ok = true;
     uint32 area_id;
     WorldLocation loc;
-    player->GetPosition(loc);
-    area_id = player->GetAreaId();
+    Creature* pCreature = m_caster->ToCreature();
+    if (pCreature)
+    {
+        float x, y, z, o;
+        pCreature->GetHomePosition(x, y, z, o);
+        loc = WorldLocation(pCreature->GetMapId(), x, y, z, o);
+
+        uint32 instId = sMapMgr.GetContinentInstanceId(pCreature->GetMapId(), x, y);
+        Map* pMap = sMapMgr.FindMap(pCreature->GetMapId(), instId);
+        if (pMap)
+            area_id = pMap->GetTerrain()->GetAreaId(x, y, z);
+        else
+            ok = false;
+    }
+    else
+        ok = false;
+
+    if(!ok)
+    {
+        player->GetPosition(loc);
+        area_id = player->GetAreaId();
+    }
 
     player->SetHomebindToLocation(loc, area_id);
 
