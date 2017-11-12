@@ -6116,14 +6116,12 @@ void Spell::EffectBind(SpellEffectIndex eff_idx)
 {
     if (!unitTarget || unitTarget->GetTypeId() != TYPEID_PLAYER)
         return;
-    if (!m_caster && !m_caster->ToCreature())
-        return;
     Player* player = (Player*)unitTarget;
 
     bool ok = true;
     uint32 area_id;
     WorldLocation loc;
-    Creature* pCreature = m_caster->ToCreature();
+    Creature* pCreature = m_caster ? m_caster->ToCreature() : nullptr;
     if (pCreature)
     {
         float x, y, z, o;
