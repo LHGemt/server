@@ -45,7 +45,7 @@ enum eSpells {
     SPELL_UPPERCUT              = 26007,
     SPELL_UNBALANCING_STRIKE    = 26613,
     SPELL_MUTATE_BUG            = 802,
-    SPELL_DOUBLE_ATTACK         = 19818, // 25% chance. There exist 10%, 50% and 100% versions as well.
+    SPELL_DOUBLE_ATTACK         = 18943, // 50% chance. Based on sniff provided by Tobschinski (https://github.com/LightsHope/server/pull/1208#issuecomment-356985526)
 
     // Vek'lor
     SPELL_SHADOWBOLT            = 26006,
