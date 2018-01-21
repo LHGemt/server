@@ -194,7 +194,7 @@ void WorldSession::HandleAutostoreLootItemOpcode(WorldPacket & recv_data)
         }
         else if (quality >= ITEM_QUALITY_RARE)
         {
-            if(pCreature && ((pCreature->GetCreatureInfo()->type_flags & CREATURE_TYPEFLAGS_BOSS) || pCreature->IsWorldBoss()) && quality >= ITEM_QUALITY_RARE)
+            if(pCreature && ((pCreature->GetCreatureInfo()->type_flags & CREATURE_TYPEFLAGS_BOSS) || pCreature->IsWorldBoss()))
                 player->SaveInventoryAndGoldToDB();
         }
 
