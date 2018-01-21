@@ -124,7 +124,6 @@ void LootLogManager::LogLootReceived(Creature * pCreature, Player * pPlayer, Ite
 
 void LootLogManager::Load()
 {
-    std::lock_guard<std::mutex> guard(_mutex);
     QueryResult* res = CharacterDatabase.PQuery("SELECT MAX(`key`) from loot_creature_death");
     if (res) {
         Field* f = res->Fetch();
