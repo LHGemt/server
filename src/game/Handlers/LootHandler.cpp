@@ -189,7 +189,7 @@ void WorldSession::HandleAutostoreLootItemOpcode(WorldPacket & recv_data)
         // Instantly save any epic or higher quality items.
         // Also save rare or higher quality items dropping from creatures with TYPEFLAG_BOSS
         uint32 quality = newitem->GetProto()->Quality;
-        if (quality >= ITEM_QUALITY_EPIC) {
+        if (quality >= sWorld.getConfig(CONFIG_UINT32_ITEM_INSTANTSAVE_QUALITY)) {
             player->SaveInventoryAndGoldToDB();
         }
         else if (quality >= ITEM_QUALITY_RARE)
