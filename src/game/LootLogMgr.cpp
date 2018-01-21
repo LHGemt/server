@@ -33,13 +33,13 @@ INSTANTIATE_SINGLETON_1(LootLogManager);
 
 /*
     When a boss is killed we get hook into the Unit::Kill function and store the following information:
-    loot_creature_death: creature-entry, a timestamp and a key 
+    loot_creature_death: creature-entry, a timestamp and a key
     loot_items:          maps each item dropped by the creature to the loot_creature_death table through the same key
     loot_candidates:     maps each eligible player to the same creature through the same key.
 
-                                      
+
     loot_creature_death   key         creatureGuid    creatureEntry    timestamp    instanceID
-    loot_items            key         itemEntry       looterGuid       
+    loot_items            key         itemEntry       looterGuid
     loot_candidates       key         playerGuid
 
     //.lootlogg ID # <Name>
@@ -59,20 +59,20 @@ INSTANTIATE_SINGLETON_1(LootLogManager);
 
 void LootLogManager::LogGroupKill(Creature * pCreature, Group * pGroup)
 {
-	if (!pCreature || !pGroup)
-		return;
-	Loot* loot = &pCreature->loot;
-	if (!loot || loot->empty())
-		return;
+    if (!pCreature || !pGroup)
+        return;
+    Loot* loot = &pCreature->loot;
+    if (!loot || loot->empty())
+        return;
 
-	// Only loot-log boss loot
-	if (!(pCreature->GetCreatureInfo()->type_flags & CREATURE_TYPEFLAGS_BOSS) && !pCreature->IsWorldBoss())
-		return;
-	
+    // Only loot-log boss loot
+    if (!(pCreature->GetCreatureInfo()->type_flags & CREATURE_TYPEFLAGS_BOSS) && !pCreature->IsWorldBoss())
+        return;
+
     uint32 instanceId = pCreature->GetMap()->GetInstanceId();
 
-	// Finding the players in range for the loot
-	std::map<Player*, std::vector<LootItem>> lootLog;
+    // Finding the players in range for the loot
+    std::map<Player*, std::vector<LootItem>> lootLog;
 
     //std::lock_guard<std::mutex> guard(_mutex);
     uint64 currentKey = ++highestKey;
@@ -80,7 +80,7 @@ void LootLogManager::LogGroupKill(Creature * pCreature, Group * pGroup)
     pCreature->SetLastDeathTime(time(NULL));
 
     CharacterDatabase.PExecute(
-        "INSERT INTO `loot_creature_death` (`key`, `creatureGuid`, `creatureEntry`, `timestamp`, `instanceId`) VALUES (%u, %llu, %u, %lld, %u)", 
+        "INSERT INTO `loot_creature_death` (`key`, `creatureGuid`, `creatureEntry`, `timestamp`, `instanceId`) VALUES (%u, %llu, %u, %lld, %u)",
         currentKey, pCreature->GetGUID(), pCreature->GetEntry(), pCreature->GetLastDeathTime(), instanceId);
 
     for (auto it = loot->items.begin(); it != loot->items.end(); it++)
@@ -113,9 +113,9 @@ void LootLogManager::LogLootReceived(Creature * pCreature, Player * pPlayer, Ite
     // Only loot-log boss loot
     if (!(pCreature->GetCreatureInfo()->type_flags & CREATURE_TYPEFLAGS_BOSS) && !pCreature->IsWorldBoss())
         return;
-    
+
     uint32 instanceId = pCreature->GetMap()->GetInstanceId();
-        
+
     CharacterDatabase.PExecute(
         "UPDATE `loot_items` set `looterGuid`=%u WHERE `itemEntry` = %u AND `key` = "
         "(select `key` from loot_creature_death where creatureGuid=%llu AND instanceID=%u AND `timestamp`=%lld)",
@@ -155,7 +155,7 @@ bool ChatHandler::HandleCanReceiveItem(char* args)
         SetSentErrorMessage(true);
         return false;
     }
-    
+
     uint32 instanceId = 0;
     if (!ExtractUInt32(&args, instanceId))
     {
@@ -171,7 +171,7 @@ bool ChatHandler::HandleCanReceiveItem(char* args)
         SetSentErrorMessage(true);
         return false;
     }
-    
+
     ItemPrototype const* pItem = ObjectMgr::GetItemPrototype(itemId);
     if (!pItem)
     {
@@ -213,14 +213,14 @@ bool ChatHandler::HandleCanReceiveItem(char* args)
         "JOIN loot_creature_death ON loot_candidates.key = loot_creature_death.key "
         "WHERE loot_candidates.playerGuid = %u AND loot_items.itemEntry = %u AND loot_creature_death.instanceId = %u",
         target_guid.GetCounter(), itemId, instanceId));
-    
+
     if (!result)
     {
         PSendSysMessage(">No recorded loot-log entries");
         SetSentErrorMessage(true);
         return false;
     }
-    else 
+    else
     {
         BarGoLink bar((int)result->GetRowCount());
         do
@@ -229,10 +229,10 @@ bool ChatHandler::HandleCanReceiveItem(char* args)
 
             Field* fields = result->Fetch();
 
-            uint32 key           = fields[0].GetUInt32();
-            uint32 itemEntry     = fields[1].GetUInt32();
-            uint32 looterGuid    = fields[2].GetUInt32();
-            time_t timestamp     = (time_t)fields[3].GetUInt64();
+            uint32 key = fields[0].GetUInt32();
+            uint32 itemEntry = fields[1].GetUInt32();
+            uint32 looterGuid = fields[2].GetUInt32();
+            time_t timestamp = (time_t)fields[3].GetUInt64();
             uint32 creatureEntry = fields[4].GetUInt32();
             uint32 creatureE2 = ObjectGuid(fields[5].GetUInt64()).GetCounter();
             std::string creature_name;
@@ -256,7 +256,7 @@ bool ChatHandler::HandleCanReceiveItem(char* args)
 
         } while (result->NextRow());
     }
-    
+
 
     return true;
 }

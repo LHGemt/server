@@ -31,10 +31,10 @@ class Player;
 class LootLogManager
 {
 public:                                                 // Constructors
-	LootLogManager() {}
+    LootLogManager() {}
 
 public:                                                 // Accessors
-	void LogGroupKill(Creature* pCreature, Group* pGroup);
+    void LogGroupKill(Creature* pCreature, Group* pGroup);
     void LogLootReceived(Creature* pCreature, Player* pPlayer, Item* item);
 
     void Load();
