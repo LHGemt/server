@@ -10,7 +10,7 @@ INSERT INTO `migrations` VALUES ('20171104132201');
 
 
 --
--- Table structure for table `instance_buff_removal`
+-- Table structure for table loot logging system
 --
 
 DROP TABLE IF EXISTS `loot_creature_death`;
