@@ -131,6 +131,7 @@ void LootLogManager::Load()
         highestKey = f[0].GetUInt64();
     }
     else {
+        highestKey = 0;
         sLog.outError("Failed retreiving LAST_INSERT_ID for an item in loot_log");
     }
 
