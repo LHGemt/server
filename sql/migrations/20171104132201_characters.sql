@@ -20,6 +20,7 @@ CREATE TABLE `loot_creature_death` (
   `creatureEntry` int(10) unsigned NOT NULL,
   `timestamp` bigint(20) NOT NULL,
   `instanceId` int(10) unsigned NOT NULL,
+  `mapId` int(10) unsigned NOT NULL,
   PRIMARY KEY (`key`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;
 

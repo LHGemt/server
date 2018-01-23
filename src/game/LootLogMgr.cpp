@@ -38,7 +38,7 @@ INSTANTIATE_SINGLETON_1(LootLogManager);
     loot_candidates:     maps each eligible player to the same creature through the same key.
 
 
-    loot_creature_death   key         creatureGuid    creatureEntry    timestamp    instanceID
+    loot_creature_death   key         creatureGuid    creatureEntry    timestamp    instanceID  mapId
     loot_items            key         itemEntry       looterGuid
     loot_candidates       key         playerGuid
 
@@ -69,8 +69,8 @@ void LootLogManager::LogGroupKill(Creature * pCreature, Group * pGroup)
     if (!(pCreature->GetCreatureInfo()->type_flags & CREATURE_TYPEFLAGS_BOSS) && !pCreature->IsWorldBoss())
         return;
 
+    uint32 mapId = pCreature->GetMap()->GetId();
     uint32 instanceId = pCreature->GetMap()->GetInstanceId();
-
     // Finding the players in range for the loot
     std::map<Player*, std::vector<LootItem>> lootLog;
 
@@ -80,8 +80,8 @@ void LootLogManager::LogGroupKill(Creature * pCreature, Group * pGroup)
     pCreature->SetLastDeathTime(time(NULL));
 
     CharacterDatabase.PExecute(
-        "INSERT INTO `loot_creature_death` (`key`, `creatureGuid`, `creatureEntry`, `timestamp`, `instanceId`) VALUES (%u, %llu, %u, %lld, %u)",
-        currentKey, pCreature->GetGUID(), pCreature->GetEntry(), pCreature->GetLastDeathTime(), instanceId);
+        "INSERT INTO `loot_creature_death` (`key`, `creatureGuid`, `creatureEntry`, `timestamp`, `instanceId`, `mapId`) VALUES (%u, %llu, %u, %lld, %u, %u)",
+        currentKey, pCreature->GetGUID(), pCreature->GetEntry(), pCreature->GetLastDeathTime(), instanceId, mapId);
 
     for (auto it = loot->items.begin(); it != loot->items.end(); it++)
     {
@@ -116,6 +116,7 @@ void LootLogManager::LogLootReceived(Creature * pCreature, Player * pPlayer, Ite
 
     uint32 instanceId = pCreature->GetMap()->GetInstanceId();
 
+    // Should not need to use mapId in this select
     CharacterDatabase.PExecute(
         "UPDATE `loot_items` set `looterGuid`=%u WHERE `itemEntry` = %u AND `key` = "
         "(select `key` from loot_creature_death where creatureGuid=%llu AND instanceID=%u AND `timestamp`=%lld)",
@@ -137,7 +138,7 @@ void LootLogManager::Load()
 }
 
 /*
-.lootlogg <name> <instanceId> <itemid>
+.lootlogg <name> <mapId> <itemid>
 Returns if player has been awarded that item ID
 */
 bool ChatHandler::HandleCanReceiveItem(char* args)
@@ -156,10 +157,10 @@ bool ChatHandler::HandleCanReceiveItem(char* args)
         return false;
     }
 
-    uint32 instanceId = 0;
-    if (!ExtractUInt32(&args, instanceId))
+    uint32 mapId = 0;
+    if (!ExtractUInt32(&args, mapId))
     {
-        PSendSysMessage("Unable to parse instance ID");
+        PSendSysMessage("Unable to parse map ID");
         SetSentErrorMessage(true);
         return false;
     }
@@ -204,15 +205,15 @@ bool ChatHandler::HandleCanReceiveItem(char* args)
     PSendSysMessage("Player: %s", player_name.c_str());
     PSendSysMessage("Item: %s", itemLink.c_str());
     PSendSysMessage("Inventory count: %u", itemCount);
-    PSendSysMessage("Instance ID: %u", instanceId);
+    PSendSysMessage("Map ID: %u", mapId);
 
     std::unique_ptr<QueryResult> result(CharacterDatabase.PQuery(
-        "SELECT DISTINCT loot_candidates.key, loot_items.itemEntry, loot_items.looterGuid, loot_creature_death.timestamp, loot_creature_death.creatureEntry, loot_creature_death.creatureGuid "
+        "SELECT DISTINCT loot_candidates.key, loot_items.itemEntry, loot_items.looterGuid, loot_creature_death.timestamp, loot_creature_death.creatureEntry, loot_creature_death.creatureGuid, loot_creature_death.instanceId "
         "FROM loot_candidates "
         "JOIN loot_items ON loot_candidates.key = loot_items.key "
         "JOIN loot_creature_death ON loot_candidates.key = loot_creature_death.key "
-        "WHERE loot_candidates.playerGuid = %u AND loot_items.itemEntry = %u AND loot_creature_death.instanceId = %u",
-        target_guid.GetCounter(), itemId, instanceId));
+        "WHERE loot_candidates.playerGuid = %u AND loot_items.itemEntry = %u AND loot_creature_death.mapId = %u",
+        target_guid.GetCounter(), itemId, mapId));
 
     if (!result)
     {
@@ -235,6 +236,8 @@ bool ChatHandler::HandleCanReceiveItem(char* args)
             time_t timestamp = (time_t)fields[3].GetUInt64();
             uint32 creatureEntry = fields[4].GetUInt32();
             uint32 creatureE2 = ObjectGuid(fields[5].GetUInt64()).GetCounter();
+            uint32 instanceId = fields[6].GetUInt32();
+
             std::string creature_name;
             if (CreatureInfo const* pCI = sObjectMgr.GetCreatureTemplate(creatureEntry))
                 creature_name = std::string(pCI->Name);
@@ -250,9 +253,9 @@ bool ChatHandler::HandleCanReceiveItem(char* args)
             }
 
             if (looterExist)
-                PSendSysMessage("> %s: Dropped by %s, looted by player: %s.", ts.c_str(), creature_name.c_str(), looterName.c_str());
+                PSendSysMessage("> %s: Dropped by %s (Inst %d), looted by player: %s.", ts.c_str(), creature_name.c_str(), instanceId, looterName.c_str());
             else
-                PSendSysMessage("> %s: Dropped by %s, can be looted by %s.", ts.c_str(), creature_name.c_str(), player_name.c_str());
+                PSendSysMessage("> %s: Dropped by %s (Inst %d), can be looted by %s.", ts.c_str(), creature_name.c_str(), instanceId, player_name.c_str());
 
         } while (result->NextRow());
     }
