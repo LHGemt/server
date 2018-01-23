@@ -128,7 +128,10 @@ void LootLogManager::Load()
     QueryResult* res = CharacterDatabase.PQuery("SELECT MAX(`key`) from loot_creature_death");
     if (res) {
         Field* f = res->Fetch();
-        highestKey = f[0].GetUInt64();
+        if (f[0].IsNULL())
+            highestKey = 0;
+        else
+            highestKey = f[0].GetUInt64();
     }
     else {
         highestKey = 0;
